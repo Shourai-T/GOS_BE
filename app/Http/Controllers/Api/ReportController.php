@@ -9,7 +9,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
-class ReportController
+use App\Http\Controllers\Controller;
+
+class ReportController extends Controller
 {
     /**
      * Get score distribution report (4 levels) for all subjects

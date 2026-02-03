@@ -6,7 +6,9 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class ScoreController
+use App\Http\Controllers\Controller;
+
+class ScoreController extends Controller
 {
     /**
      * Search student by SBD and return their scores
