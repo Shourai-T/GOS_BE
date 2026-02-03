@@ -161,10 +161,13 @@ class ImportScoresCommand extends Command
     {
         $maxRetries = 3;
         $attempt = 0;
+        
+        // Instantiate Validator with current subject map
+        $validator = new \App\Services\CsvRowValidator($this->subjectMap);
 
         while ($attempt < $maxRetries) {
             try {
-                DB::transaction(function () use ($chunk, $header) {
+                DB::transaction(function () use ($chunk, $header, $validator) {
                     $students = [];
                     $scores = [];
 
@@ -173,7 +176,8 @@ class ImportScoresCommand extends Command
                         $row = $item['data'];
 
                         try {
-                            $validated = $this->validateRow($row, $header, $lineNumber);
+                            // Delegate validation to service
+                            $validated = $validator->validateRow($row, $header, $lineNumber);
                             if ($validated) {
                                 $students[] = $validated['student'];
                                 $scores = array_merge($scores, $validated['scores']);
@@ -221,64 +225,6 @@ class ImportScoresCommand extends Command
 
         // Small delay to prevent overwhelming database
         usleep(10000); // 10ms
-    }
-
-    private function validateRow(array $row, array $header, int $lineNumber): ?array
-    {
-        $data = array_combine($header, $row);
-
-        if (empty($data['sbd'])) {
-            throw new \Exception("Missing SBD");
-        }
-
-        // Prepare student data
-        $student = [
-            'sbd' => $data['sbd'],
-            'ma_ngoai_ngu' => $data['ma_ngoai_ngu'] ?? null,
-            'group_a_score' => null,
-        ];
-
-        // Calculate group A score (Toán + Lý + Hóa)
-        $toan = $this->parseScore($data['toan'] ?? null);
-        $ly = $this->parseScore($data['vat_li'] ?? null);
-        $hoa = $this->parseScore($data['hoa_hoc'] ?? null);
-
-        if ($toan !== null && $ly !== null && $hoa !== null) {
-            $student['group_a_score'] = $toan + $ly + $hoa;
-        }
-
-        // Prepare scores
-        $scores = [];
-        foreach (['toan', 'ngu_van', 'ngoai_ngu', 'vat_li', 'hoa_hoc', 'sinh_hoc', 'lich_su', 'dia_li', 'gdcd'] as $subjectKey) {
-            if (isset($data[$subjectKey]) && isset($this->subjectMap[$subjectKey])) {
-                $score = $this->parseScore($data[$subjectKey]);
-                if ($score !== null) {
-                    $scores[] = [
-                        'sbd' => $data['sbd'],
-                        'subject_key' => $subjectKey,
-                        'subject_id' => $this->subjectMap[$subjectKey],
-                        'score' => $score,
-                    ];
-                }
-            }
-        }
-
-        return ['student' => $student, 'scores' => $scores];
-    }
-
-    private function parseScore($value): ?float
-    {
-        if ($value === null || $value === '' || strtoupper($value) === 'NA') {
-            return null;
-        }
-
-        $score = (float) $value;
-
-        if ($score < 0 || $score > 10) {
-            throw new \Exception("Score out of range: {$value}");
-        }
-
-        return $score;
     }
 
     private function upsertStudents(array $students): void
