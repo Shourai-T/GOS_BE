@@ -22,7 +22,7 @@ class CsvRowValidator
      * Validate CSV row and prepare data for DB
      * @throws Exception
      */
-    public function validateRow(array $row, array $header, int $lineNumber): ?array
+    public function validateRow(array $row, array $header, int $lineNumber): array
     {
         // Prevent array_combine error if row length mismatch
         if (count($header) !== count($row)) {
@@ -83,11 +83,7 @@ class CsvRowValidator
         }
 
         if (!is_numeric($value)) {
-             // If completely invalid format, treat as null or throw?
-             // Requirement usually implies strict numeric or NA.
-             // Let's safe cast, but if it fails validation logic usually handles it.
-             // Given input is CSV, might be dirty.
-             return null;
+            return null; // Treat non-numeric values as missing score
         }
 
         $score = (float) $value;
