@@ -1,8 +1,8 @@
-# Backend Dockerfile
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Install system dependencies + nginx
 RUN apt-get update && apt-get install -y \
+    nginx \
     git \
     curl \
     libpng-dev \
@@ -17,27 +17,19 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
 WORKDIR /var/www/backend
 
-# Copy composer files (build context is backend/ directory)
 COPY composer.json composer.lock ./
-
-# Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Copy application files
 COPY . .
 
-# Set permissions
 RUN chown -R www-data:www-data /var/www/backend \
-    && chmod -R 755 /var/www/backend/storage \
-    && chmod -R 755 /var/www/backend/bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache
 
-# Generate optimized autoload
-RUN composer dump-autoload --optimize
+# Copy nginx config
+COPY docker/nginx.conf /etc/nginx/nginx.conf
 
-# Expose port
-EXPOSE 9000
+EXPOSE 10000
 
-CMD ["php-fpm"]
+CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
