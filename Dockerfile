@@ -30,6 +30,9 @@ RUN chown -R www-data:www-data /var/www/backend \
 # Copy nginx config
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 
+# Update nginx to listen on port 10000 (Render default)
+RUN sed -i 's/listen 80;/listen 10000;/g' /etc/nginx/nginx.conf
+
 EXPOSE 10000
 
 CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
