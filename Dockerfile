@@ -20,14 +20,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/backend
 
-# Copy composer files
-COPY backend/composer.json backend/composer.lock ./
+# Copy composer files (build context is backend/ directory)
+COPY composer.json composer.lock ./
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Copy application files
-COPY backend/ .
+COPY . .
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/backend \
