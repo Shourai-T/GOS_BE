@@ -2,6 +2,8 @@
 
 Laravel backend API for the G-Scores student scoring system.
 
+> **⚠️ NOTE**: Demo deployment uses Supabase Free Tier. Expect slower response times (>30s) due to storage limits. For best performance, use dedicated PostgreSQL instance.
+
 ---
 
 ## 🚀 Quick Start
